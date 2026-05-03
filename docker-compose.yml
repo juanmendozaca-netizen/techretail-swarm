@@ -14,6 +14,11 @@ services:
         condition: on-failure
         delay: 5s
         max_attempts: 3
+      resources:
+         limits:
+           memory: 50M
+         reservations:
+           memory: 20M
 
   backend:
     image: node:18-alpine
@@ -34,6 +39,12 @@ services:
         condition: on-failure
         delay: 5s
         max_attempts: 3
+      resources:
+        limits:
+          memory: 150M
+        reservations:
+          memory: 80M
+
     secrets:
       - db_password
 
@@ -42,6 +53,9 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD_FILE: /run/secrets/db_password
       MYSQL_DATABASE: techretail_db
+      MYSQL_INNODB_BUFFER_POOL_SIZE: "128M"
+      MYSQL_INNODB_LOG_FILE_SIZE: "32M"
+      MYSQL_PERFORMANCE_SCHEMA: "OFF"
     networks:
       - techretail_net
     volumes:
@@ -55,11 +69,18 @@ services:
       placement:
         constraints:
           - node.role == manager
+      resources:
+        limits:
+          memory: 400M
+        reservations:
+          memory: 200M
+
     secrets:
       - db_password
 
   cache:
     image: redis:7-alpine
+    command: redis-server --maxmemory 80mb --maxmemory-policy allkeys-lru
     networks:
       - techretail_net
     deploy:
@@ -68,6 +89,12 @@ services:
         condition: on-failure
         delay: 5s
         max_attempts: 3
+      resources:
+        limits:
+          memory: 100M
+        reservations:
+          memory: 50M
+
 
   visualizer:
     image: dockersamples/visualizer
@@ -81,6 +108,12 @@ services:
       placement:
         constraints:
           - node.role == manager
+      resources:
+        limits:
+          memory: 100M
+        reservations:
+          memory: 50M
+
 
 networks:
   techretail_net:
